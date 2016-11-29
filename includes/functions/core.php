@@ -42,7 +42,8 @@ function setup() {
 function get_site_domain() {
 	$url_parts = parse_url( get_bloginfo( 'url' ) );
 
-	$site_domain = $url_parts['host'] . ($url_parts['port'] ? ':' . $url_parts['port'] : '');
+	$site_domain = $url_parts['host'] . ( isset( $url_parts['port'] ) ? ':' . $url_parts['port'] : '' );
+
 
 	/**
 	 * Update the stored site domain, should an aliasing plugin be used (for example)
@@ -112,6 +113,7 @@ function initialize_manager() {
 
 		$cdn_domains = [];
 		$cdn_assets_domains = [];
+
 		if ( defined( 'DYNCDN_DOMAINS' ) ) {
 			$cdn_domains = $cdn_assets_domains = explode( ',', DYNCDN_DOMAINS );
 			$cdn_domains = $cdn_assets_domains = array_map( 'trim', $cdn_domains );
@@ -167,7 +169,7 @@ function srcsets( $sources, $size_array, $image_src, $image_meta, $attachment_id
  * @return \Closure
  */
 function srcset_replacer( $domain ) {
-	$manager = \EAMann\Dynamic_CDN\DomainManager($domain);
+	$manager = \EAMann\Dynamic_CDN\DomainManager( $domain );
 
 	/**
 	 * Replace the URL for a specific source in a srcset with a CDN'd version
@@ -236,7 +238,7 @@ function filter_uploads_only( $content ) {
 	$preg_path = str_replace( '/', '\\\?/', preg_quote( $path, '#' ) );
 
 	// Targeted replace just on uploads URLs
-	$pattern = "#=(\\\?[\"'])"  // open equal sign and opening quote
+	$pattern = "#(\\\?[\"'])"  // opening quote
 	. "(https?:\\\?/\\\?/{$domain})?"// domain (optional)
 	. "\\\?/($preg_path\\\?/" // uploads path
 	// . "((?:(?!\\1]).)+)" // look for anything that's not our opening quote
@@ -277,7 +279,7 @@ function filter( $content ) {
 	$url = apply_filters( 'dynamic_cdn_site_domain', rtrim( implode( '://', $url ), '/' ) );
 	$url = preg_quote( $url, '#' );
 
-	$pattern = "#=(\\\?[\"'])" // open equal sign and opening quote
+	$pattern = "#(\\\?[\"'])" // opening quote
 	. "(https?:\\\?/\\\?/{$url})?\\\?/"  // domain (optional)
 	// . "([^/](?:(?!\\1).)+)" // look for anything that's not our opening quote
 	. "([^/][\w\s\\\/\-\,\.]+)" // look for anything that's not our opening quote
@@ -339,7 +341,7 @@ function filter_cb( $matches ) {
 		$add_slashes = false;
 	}
 
-	$result = "={$matches[1]}{$scheme}:"
+	$result = "{$matches[1]}{$scheme}:"
 						. ( $add_slashes ? addcslashes("//{$url}/", '/') : "//{$url}/" )
 						. "{$matches[3]}.{$matches[4]}{$query_string}{$matches[1]}";
 

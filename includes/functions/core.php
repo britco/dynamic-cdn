@@ -98,6 +98,31 @@ function initialize_manager() {
 	$filter_priority = apply_filters( 'dynamic_cdn_filter_priority', 10 );
 	$action_priority = apply_filters( 'dynamic_cdn_action_priority', 10 );
 
+	$cdn_domains = [];
+	$cdn_assets_domains = [];
+
+	if ( defined( 'DYNCDN_DOMAINS' ) ) {
+		$cdn_domains = $cdn_assets_domains = explode( ',', DYNCDN_DOMAINS );
+		$cdn_domains = $cdn_assets_domains = array_map( 'trim', $cdn_domains );
+	}
+
+	if( defined( 'DYNCDN_ASSETS_DOMAINS' ) ) {
+		$cdn_assets_domains = explode( ',', DYNCDN_ASSETS_DOMAINS );
+		$cdn_assets_domains = array_map( 'trim', $cdn_assets_domains );
+	}
+
+	/**
+		* Programmatically control and/or override any CDN domains as passed in via a hard-coded constant.
+		*
+		* @param array $cdn_domains
+		*/
+	$cdn_domains = apply_filters( 'dynamic_cdn_default_domains', $cdn_domains );
+	$cdn_assets_domains = apply_filters( 'dynamic_cdn_assets_default_domains', $cdn_assets_domains );
+
+	// Add all domains to the manager
+	array_map( function( $domain ) use ( $manager ) { $manager->add( $domain, 'uploads' ); }, $cdn_domains );
+	array_map( function( $domain ) use ( $manager ) { $manager->add( $domain, 'assets' ); }, $cdn_assets_domains );
+
 	if ( ! is_admin() ) {
 		add_action( 'template_redirect', '\EAMann\Dynamic_CDN\Core\create_buffer', $action_priority );
 
@@ -110,30 +135,6 @@ function initialize_manager() {
 		add_filter( 'wp_calculate_image_srcset', '\EAMann\Dynamic_CDN\Core\srcsets', 10, 5 );
 
 		add_action( 'rest_api_init', '\EAMann\Dynamic_CDN\Core\create_buffer' );
-
-		$cdn_domains = [];
-		$cdn_assets_domains = [];
-
-		if ( defined( 'DYNCDN_DOMAINS' ) ) {
-			$cdn_domains = $cdn_assets_domains = explode( ',', DYNCDN_DOMAINS );
-			$cdn_domains = $cdn_assets_domains = array_map( 'trim', $cdn_domains );
-		}
-		if( defined( 'DYNCDN_ASSETS_DOMAINS' ) ) {
-			$cdn_assets_domains = explode( ',', DYNCDN_ASSETS_DOMAINS );
-			$cdn_assets_domains = array_map( 'trim', $cdn_assets_domains );
-		}
-
-		/**
-		 * Programmatically control and/or override any CDN domains as passed in via a hard-coded constant.
-		 *
-		 * @param array $cdn_domains
-		 */
-		$cdn_domains = apply_filters( 'dynamic_cdn_default_domains', $cdn_domains );
-		$cdn_assets_domains = apply_filters( 'dynamic_cdn_assets_default_domains', $cdn_assets_domains );
-
-		// Add all domains to the manager
-		array_map( function( $domain ) use ( $manager ) { $manager->add( $domain, 'uploads' ); }, $cdn_domains );
-		array_map( function( $domain ) use ( $manager ) { $manager->add( $domain, 'assets' ); }, $cdn_assets_domains );
 	}
 }
 
